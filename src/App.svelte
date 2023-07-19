@@ -1,21 +1,16 @@
 <script lang="ts">
   import { state, update } from "./state/state";
-  import type { GameState } from "./state/types";
   import Dice from "./components/Dice.svelte";
   import Header from "./components/Header.svelte";
   import Footer from "./components/Footer.svelte";
 
-  let store: GameState;
-  state.subscribe((val) => {
-    store = val;
-  });
   $: allowBet = countdown > 0 && countdown < 10 ? true : false;
   $: countdown = 10;
   $: won = 0;
   $: lost = 0;
   $: showResult = false;
   $: showCalculating = false;
-  $: diceWon = 0;
+  $: diceWon = 1;
 
   $: {
     if (countdown === 0) {
@@ -32,14 +27,13 @@
 
   function calculateBalanceAfterBet() {
     let randomDicePick = Math.floor(Math.random() * 6);
-    console.log("Amith", randomDicePick);
     diceWon =  randomDicePick;
     let winVal = 0;
     let loseVal = 0;
-    store.dices.forEach((dice, index) => {
+    $state.dices.forEach((dice, index) => {
       if (randomDicePick === index) {
         winVal = 2 * dice.value;
-        update(store).increaseBalance(winVal);
+        update($state).increaseBalance(winVal);
       } else {
         loseVal += dice.value;
       }
@@ -57,7 +51,7 @@
   }
 
   function startGame(): void {
-    update(store).resetDices();
+    update($state).resetDices();
     allowBet = true;
     let timer: any;
     let count: number = 10;
@@ -88,16 +82,16 @@
   }
 
   function handleBet(diceNumber: number): void {
-    if (store.balance > 0) {
-      update(store).increaseBet(1, diceNumber);
+    if ($state.balance > 0) {
+      update($state).increaseBet(1, diceNumber);
     }
   }
 </script>
 
 <main class="App">
-  <Header {store} />
+  <Header store={$state} />
   <div class={`dice-container ${allowBet ? "allowed" : "not-allowed"}`}>
-    {#each store.dices as dice, index}
+    {#each $state.dices as dice, index}
       <Dice {dice} {index} {handleBet} />
     {/each}
   </div>
@@ -108,13 +102,13 @@
     {/if}
     {#if showResult}
     <h3>
-      {`Dice ${diceWon} wins`}
+      {`Dice ${diceWon + 1} wins`}
       <span class="result-won">{`Result: Won ${won}`}</span>
       <span class="result-lost">{`Lost ${lost}`}</span>
     </h3>
     {/if}
   </div>
-  <Footer {startGame} {reBet} balance={store.balance} {allowBet} {countdown} />
+  <Footer {startGame} {reBet} balance={$state.balance} {allowBet} {countdown} />
 </main>
 
 <style lang="scss" global>
